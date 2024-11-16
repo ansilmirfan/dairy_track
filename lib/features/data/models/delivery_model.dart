@@ -1,0 +1,72 @@
+import 'package:dairy_track/core/utils/utils.dart';
+import 'package:dairy_track/features/data/models/driver_model.dart';
+import 'package:dairy_track/features/data/models/store_model.dart';
+
+
+class DeliveryModel {
+  final String id;
+  final DriverModel driver;
+  final DateTime date;
+  final String route;
+  final List<ShopDeliveryModel> shops;
+  final double initialStock;
+  final double remainingStock;
+  final double deliveredStock;
+  DeliveryModel({
+    required this.id,
+    required this.driver,
+    required this.date,
+    required this.route,
+    required this.initialStock,
+    required this.shops,
+    this.remainingStock = 0,
+    this.deliveredStock = 0,
+  });
+  factory DeliveryModel.fromMap(
+      {required Map<String, dynamic> map,
+      required DriverModel driverModel,
+      required List<ShopDeliveryModel> shops}) {
+    final date = DateTime.parse(map['date']);
+
+    return DeliveryModel(
+      id: map['id'],
+      driver: driverModel,
+      date: date,
+      route: map['route'],
+      initialStock: map['initial stock'],
+      deliveredStock: map['delivered stock'],
+      remainingStock: map['remaining stock'],
+      shops: shops,
+    );
+  }
+
+  static Map<String, dynamic> toMap(DeliveryModel model) {
+    return {
+      'id': model.id,
+      'date': Utils.formatDate(model.date),
+      'route': model.route,
+      'driver': model.driver.id,
+      'initial stock': model.initialStock,
+      'delivered stock': model.deliveredStock,
+      'remaining stock': model.remainingStock,
+      'shops': model.shops
+          .map((e) => {
+                'shop id': e.shopModel.id,
+                'status': e.status,
+                'delivered quantity': e.deliveredQuantity,
+              })
+          .toList(),
+    };
+  }
+}
+
+class ShopDeliveryModel {
+  final ShopModel shopModel;
+  final double deliveredQuantity;
+  final String status;
+  ShopDeliveryModel({
+    required this.shopModel,
+    this.deliveredQuantity = 0,
+    this.status = 'unknown',
+  });
+}
