@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dairy_track/core/error/firebase_auth_exception.dart';
+import 'package:dairy_track/core/utils/utils.dart';
 import 'package:dairy_track/features/data/models/driver_model.dart';
 
 class DataSource {
@@ -122,4 +123,19 @@ class DataSource {
       throw e.toString();
     }
   }
+  Future<Map<String, dynamic>?> getTodaysOrder(String id) async {
+    try {
+      final data = await _firestore
+          .collection('delivery datasource')
+          .where('date', isEqualTo: Utils.formatDate(DateTime.now()))
+          .where('driver', isEqualTo: id)
+          .get();
+      return data.docChanges.first.doc.data();
+    } on FirebaseException catch (e) {
+      throw FirebaseExceptions.handleFirebaseExceptions(e);
+    } catch (e) {
+      return null;
+    }
+  }
+  
 }

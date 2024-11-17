@@ -3,6 +3,7 @@ import 'package:geolocator/geolocator.dart';
 
 class LocationController extends GetxController {
   var currentLocation = Rx<Position?>(null);
+
   var locationMessage = "Fetching location...".obs;
   var isPermissionDenied = false.obs;
 

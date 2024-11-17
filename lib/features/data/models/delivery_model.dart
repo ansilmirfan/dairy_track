@@ -26,12 +26,10 @@ class DeliveryModel {
       {required Map<String, dynamic> map,
       required DriverModel driverModel,
       required List<ShopDeliveryModel> shops}) {
-    final date = DateTime.parse(map['date']);
-
     return DeliveryModel(
       id: map['id'],
       driver: driverModel,
-      date: date,
+      date: Utils.parseDate(map['date']),
       route: map['route'],
       initialStock: map['initial stock'],
       deliveredStock: map['delivered stock'],
@@ -54,6 +52,7 @@ class DeliveryModel {
                 'shop id': e.shopModel.id,
                 'status': e.status,
                 'delivered quantity': e.deliveredQuantity,
+                'date': e.dateTime
               })
           .toList(),
     };
@@ -64,9 +63,11 @@ class ShopDeliveryModel {
   final ShopModel shopModel;
   final double deliveredQuantity;
   final String status;
+  final DateTime? dateTime;
   ShopDeliveryModel({
     required this.shopModel,
     this.deliveredQuantity = 0,
     this.status = 'unknown',
+    this.dateTime,
   });
 }

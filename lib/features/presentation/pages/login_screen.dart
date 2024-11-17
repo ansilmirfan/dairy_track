@@ -7,13 +7,14 @@ import 'package:dairy_track/features/presentation/widgets/elevated_container.dar
 import 'package:dairy_track/features/presentation/widgets/gap.dart';
 import 'package:dairy_track/features/presentation/widgets/text/bold_title_text.dart';
 import 'package:flutter/material.dart';
+
 import 'package:get/get.dart';
 
 class LoginScreen extends StatelessWidget {
   LoginScreen({super.key});
   final TextEditingController userNameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final LogInAuth authController = Get.put(LogInAuth());
+  final LoginAuthController authController = Get.put(LoginAuthController());
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +24,7 @@ class LoginScreen extends StatelessWidget {
         () {
           if (authController.isLoggedIn.value) {
             Future.microtask(
-              () => Get.off( Home()),
+              () => Get.off(Home()),
             );
           }
           return Container(
