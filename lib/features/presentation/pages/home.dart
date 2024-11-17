@@ -1,42 +1,60 @@
-// ignore_for_file: library_private_types_in_public_api
+// ignore_for_file: must_be_immutable
 
+import 'dart:async';
+
+import 'package:dairy_track/features/presentation/getx/location_service.dart';
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:get/get.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-class Home extends StatefulWidget {
-  const Home({super.key});
-
-  @override
-  _HomeState createState() => _HomeState();
-}
-
-class _HomeState extends State<Home> {
-  String locationMessage = "Fetching location...";
-
-  @override
-  void initState() {
-    super.initState();
-    _getCurrentLocation();
-  }
+class Home extends StatelessWidget {
+  Home({super.key});
+  final LocationController controller = Get.put(LocationController());
+  final Completer<GoogleMapController> _controller =
+      Completer<GoogleMapController>();
+//------------company location-------------------
+  static const CameraPosition _companyLocation = CameraPosition(
+    target: LatLng(11.641607, 76.110927),
+    zoom: 17,
+  );
+  //-------------markers-------------
+  Set<Marker> markers = <Marker>{};
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Location Example")),
-      body: Center(
-        child: Text(locationMessage),
-      ),
+      body: Obx(() {
+        if (controller.isPermissionDenied.value) {
+          return _requestForPermission();
+        } else {
+          return GoogleMap(
+            mapType: MapType.hybrid,
+            initialCameraPosition: _companyLocation,
+            onMapCreated: (GoogleMapController controller) {
+              _controller.complete(controller);
+            },
+            markers: markers,
+            onLongPress: (argument) {
+              Get.back(result: argument);
+            },
+          );
+        }
+      }),
     );
   }
 
-  Future<Position> _getCurrentLocation() async {
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        return Future.error('Location permissions are denied');
-      }
-    }
-    return await Geolocator.getCurrentPosition();
+  Center _requestForPermission() {
+    return Center(
+      child: Column(
+        children: [
+          const Text('Location permission is denied please enable to continue'),
+          ElevatedButton(
+              onPressed: () {
+                controller.checkAndTrackLocation();
+              },
+              child: const Text('Request Permission'))
+        ],
+      ),
+    );
   }
 }
