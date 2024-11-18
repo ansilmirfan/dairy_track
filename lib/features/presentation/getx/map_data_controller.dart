@@ -7,6 +7,7 @@ import 'package:dairy_track/features/data/models/delivery_model.dart';
 import 'package:dairy_track/features/data/models/driver_model.dart';
 import 'package:dairy_track/features/data/models/store_model.dart';
 import 'package:dairy_track/features/presentation/getx/location_service.dart';
+import 'package:dairy_track/features/presentation/widgets/custom_alert_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -18,7 +19,6 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 class MapController extends GetxController {
   final LocationController _locationController = Get.put(LocationController());
   var mapController = Completer<GoogleMapController>().obs;
-
   final DataSource _dataSource = DataSource();
   var loading = false.obs;
   //-------------marks to the route-----------------
@@ -36,6 +36,7 @@ class MapController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+
     _setCameraToCurrentLocation();
     _addCompanyToMarkers();
   }
@@ -43,19 +44,20 @@ class MapController extends GetxController {
 //-----------------adding company location to markers-----------------
   void _addCompanyToMarkers() {
     var companyLocation = Marker(
-        onTap: () {
-          if (_locationController.currentLocation.value != null) {
-            showLocationToThePoint(
-                LatLng(_locationController.currentLocation.value!.latitude,
-                    _locationController.currentLocation.value!.longitude),
-                const LatLng(11.641607, 76.110927),
-                'company');
-          }
-        },
-        markerId: const MarkerId('Company Location'),
-        position: const LatLng(11.641607, 76.110927),
-        icon: BitmapDescriptor.defaultMarkerWithHue(240),
-        infoWindow: const InfoWindow(title: 'Company Location'));
+      onTap: () {
+        if (_locationController.currentLocation.value != null) {
+          showLocationToThePoint(
+              LatLng(_locationController.currentLocation.value!.latitude,
+                  _locationController.currentLocation.value!.longitude),
+              const LatLng(11.641607, 76.110927),
+              'company');
+        }
+      },
+      markerId: const MarkerId('Company Location'),
+      position: const LatLng(11.641607, 76.110927),
+      icon: BitmapDescriptor.defaultMarkerWithHue(240),
+      infoWindow: const InfoWindow(title: 'Company Location'),
+    );
 
     markers.value.add(companyLocation);
   }
@@ -64,14 +66,17 @@ class MapController extends GetxController {
   void _setCameraToCurrentLocation() {
     _locationController.currentLocation.stream.listen((postion) {
       if (postion != null) {
-        markers.value.add(
-          Marker(
-              markerId: const MarkerId('Your location'),
-              infoWindow: const InfoWindow(title: 'Your Location'),
-              icon: BitmapDescriptor.defaultMarkerWithHue(30)),
-        );
-
         _cameraToPossition(LatLng(postion.latitude, postion.longitude));
+
+        //------------setting new polyline is the user moves ----------------
+        if (polylines.value.isNotEmpty) {
+          final polyline = polylines.value.first;
+          final endPoint = polyline.points.last;
+          final startPoint = LatLng(postion.latitude, postion.longitude);
+
+          showLocationToThePoint(
+              startPoint, endPoint, polyline.mapsId.toString());
+        }
       }
     });
   }
@@ -93,11 +98,13 @@ class MapController extends GetxController {
           final shopMap =
               await _dataSource.getOne('sellers', element['shop id']);
           final shopModel = ShopModel.fromMap(shopMap);
-          shopDeliveryModel.add(ShopDeliveryModel(
-              shopModel: shopModel,
-              dateTime: DateTime.tryParse(element['date'] ?? ''),
-              deliveredQuantity: element['delivered quantity'],
-              status: element['status']));
+          shopDeliveryModel.add(
+            ShopDeliveryModel(
+                shopModel: shopModel,
+                dateTime: DateTime.tryParse(element['date'] ?? ''),
+                deliveredQuantity: element['delivered quantity'],
+                status: element['status']),
+          );
         }
         //------initilising delivery model-------------------
         final DeliveryModel model = DeliveryModel.fromMap(
@@ -105,31 +112,36 @@ class MapController extends GetxController {
         deliverymodel.value = model;
         //----------setting up markers for the map--------------
         for (var element in model.shops) {
-          markers.value.add(
-            Marker(
+          final marker = Marker(
+              onTap: () {
+                if (_locationController.currentLocation.value != null) {
+                  //--------current location------------
+                  var currentLocation = LatLng(
+                      _locationController.currentLocation.value!.latitude,
+                      _locationController.currentLocation.value!.longitude);
+                  //----------delivery location----------------
+                  var deliveryLocation = LatLng(
+                      element.shopModel.location.latitude,
+                      element.shopModel.location.longitude);
+                  showLocationToThePoint(
+                      currentLocation, deliveryLocation, element.shopModel.id);
+                } else {
+                  log('current location is null');
+                }
+              },
+              markerId: MarkerId(element.shopModel.id),
+              position: LatLng(element.shopModel.location.latitude,
+                  element.shopModel.location.longitude),
+              icon: BitmapDescriptor.defaultMarkerWithHue(
+                  element.status == 'Delivered' ? 120.0 : 0.0),
+              infoWindow: InfoWindow(
+                title: element.shopModel.name,
+                snippet: element.status,
                 onTap: () {
-                  if (_locationController.currentLocation.value != null) {
-                    //--------current location------------
-                    var currentLocation = LatLng(
-                        _locationController.currentLocation.value!.latitude,
-                        _locationController.currentLocation.value!.longitude);
-                    //----------delivery location----------------
-                    var deliveryLocation = LatLng(
-                        element.shopModel.location.latitude,
-                        element.shopModel.location.longitude);
-                    showLocationToThePoint(currentLocation, deliveryLocation,
-                        element.shopModel.id);
-                  } else {
-                    log('current location is null');
-                  }
+                  showStatuUpdationDialog(model, element.shopModel.id);
                 },
-                markerId: MarkerId(element.shopModel.id),
-                position: LatLng(element.shopModel.location.latitude,
-                    element.shopModel.location.longitude),
-                icon: BitmapDescriptor.defaultMarkerWithHue(
-                    element.status == 'delivered' ? 120.0 : 0.0),
-                infoWindow: InfoWindow(title: element.shopModel.name)),
-          );
+              ));
+          markers.value.add(marker);
         }
       }
       log('markers value===${markers.length}');
@@ -143,7 +155,7 @@ class MapController extends GetxController {
   //-------- setting camera possition to the center of the current user location--------------
   Future<void> _cameraToPossition(LatLng pos) async {
     final GoogleMapController controller = await mapController.value.future;
-    CameraPosition newCameraPossition = CameraPosition(target: pos, zoom: 13);
+    CameraPosition newCameraPossition = CameraPosition(target: pos, zoom: 17);
     await controller
         .animateCamera(CameraUpdate.newCameraPosition(newCameraPossition));
   }
@@ -170,6 +182,24 @@ class MapController extends GetxController {
     } catch (e) {
       log('error from showing route$e');
       loading.value = false;
+    }
+  }
+
+  deliveredStatusUpdate({
+    required String id,
+    required DeliveryModel model,
+  }) async {
+    try {
+      loading.value = true;
+      log('id ======$id');
+      await _dataSource.edit(
+          id, 'delivery datasource', DeliveryModel.toMap(model));
+      loading.value = false;
+      Get.back();
+      addLocations(model.driver.id);
+    } catch (e) {
+      loading.value = false;
+      log('error while updating===$e');
     }
   }
 

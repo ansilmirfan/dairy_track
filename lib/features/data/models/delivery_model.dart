@@ -2,7 +2,6 @@ import 'package:dairy_track/core/utils/utils.dart';
 import 'package:dairy_track/features/data/models/driver_model.dart';
 import 'package:dairy_track/features/data/models/store_model.dart';
 
-
 class DeliveryModel {
   final String id;
   final DriverModel driver;
@@ -10,8 +9,8 @@ class DeliveryModel {
   final String route;
   final List<ShopDeliveryModel> shops;
   final double initialStock;
-  final double remainingStock;
-  final double deliveredStock;
+  double remainingStock;
+  double deliveredStock;
   DeliveryModel({
     required this.id,
     required this.driver,
@@ -52,7 +51,7 @@ class DeliveryModel {
                 'shop id': e.shopModel.id,
                 'status': e.status,
                 'delivered quantity': e.deliveredQuantity,
-                'date': e.dateTime
+                'date': e.dateTime.toString()
               })
           .toList(),
     };
@@ -60,10 +59,10 @@ class DeliveryModel {
 }
 
 class ShopDeliveryModel {
-  final ShopModel shopModel;
-  final double deliveredQuantity;
-  final String status;
-  final DateTime? dateTime;
+  ShopModel shopModel;
+  double deliveredQuantity;
+  String status;
+  DateTime? dateTime;
   ShopDeliveryModel({
     required this.shopModel,
     this.deliveredQuantity = 0,
