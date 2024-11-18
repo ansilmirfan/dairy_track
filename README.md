@@ -1,16 +1,26 @@
-# dairy_track
+# Dairy Track
 
-A new Flutter project.
+## Overview
+The **Dairy Track** mobile app is designed to assist a dairy operation unit in managing the production, distribution, and delivery of dairy products. The app helps manage the supply chain from milk tankers receiving supplies to retail store deliveries. It enables drivers (salesmen) to efficiently navigate assigned routes and manage store visits.
 
-## Getting Started
+## Features
+The app includes the following core functionalities:
 
-This project is a starting point for a Flutter application.
+### 1. **Landing Page & Basic Login Screen**
+   - A landing page for the app.
+   - A secure login screen where users can enter their credentials to access the app.
 
-A few resources to get you started if this is your first Flutter project:
+### 2. **Navigation Page**
+   - Assists drivers in navigating to their assigned stores using **location coordinates**.
+   - Provides directions using **Google Maps**.
+   - Drivers can mark their visit as completed, with timestamps for reference.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Tech Stack
+- **Flutter**: Framework used for building the mobile application.
+- **Packages Used**:
+  - `geolocator`: For fetching the current location of the driver.
+  - `get`: For state management and dependency injection.
+  - `google_map_polyline_new`: For drawing routes on Google Maps.
+  - `google_maps_flutter`: For integrating Google Maps for navigation.
+- **Firebase**: Used for storing and managing data such as users (drivers), store information, and visit data.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
